@@ -1,0 +1,5 @@
+# Don't track content of these folders
+funding-societies-assignment_files/
+
+.ipynb_checkpoints
+
