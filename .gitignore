@@ -1,5 +1,7 @@
 # Don't track content of these folders
 funding-societies-assignment_files/
 
+loan_fs.csv
+
 .ipynb_checkpoints
 
