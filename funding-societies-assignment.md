@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import seaborn as sns
 
+from scipy import stats
+
 %matplotlib inline
 pd.set_option('display.max_columns', 100)
 ```
@@ -19,34 +21,33 @@ df = pd.read_csv('./loans_fs.csv', index_col=0)
       interactivity=interactivity, compiler=compiler, result=result)
 
 
-At Funding Societies, we use various data sources to assess the suitability of a borrower on our platform. We predict the willingness and ability of a borrower to repay us. This is a dataset of personal loans and the variables utilised to make lending decisions. 
+1. Predit willingess and ability of a borrower to repay us
 
-Your task would be to summarise the data and perform some initial analysis on it with a focus on the factors that drive lending decisions.
-
-Feel free to use any software to process, analyse, model and present your findings. The idea here is to give you a realistic experience of the work we do. Please send across all workings including your code and any working files. 
-
-What we want to look at is your thought process in approaching the problem and so, please explain how you are cleaning and dissecting the data and why you are using any particular methods. All the best!
-
-
-loan_amnt: amount of loan applied for by the borrower
-
-funded_amnt: total amount committed to that loan at that point of time
-
-funded_amnt_inv: total amount committed by investors for that loan at that point in time
-
-empy_title: the job title supplied by the Borrower when applying for the loan
-
-verification_status: indicates if income was verified by LC, not verified, or if the income source was verified
-
-issue_d: the month which the loan was funded
-
-pymnt_plan: indicates if a payment plan has been put in place for the loan
+2. Summarise the data and perform intial analysis on the focus that drive lending decisions (WHO SHOULD WE LEND MONEY TO?)
 
 dti: a ratio calculated using the borrower’s total monthly debt payments on the total debt obligations, excluding mortgage and the requested LC loan, divided by the borrower’s self-reported monthly income.
 
+term: 36 months, 60 months, 600 months
+
+payment_plan: y, n
+
+grade: A, B, C, D, E, F, G
+
+sub_grade: 1 to 5
+
+emp_length: < 1 year to 10+ years increment by 1 year
+
+home_ownership: rent, own, mortgage, other, none, any
+
+verification_status: verified, source verified, not verified
+
+loan_status: fully paid, does not meet credit policy. fully paid, current, in grace period, late (16-30 days), late (31-120 days), default, charged off, does not meet credit policy. charged off
+
+purpose: credit card, car, small business, wedding, debt consolidation, home improvement, major purchase, medical, moving, vacation, house, renewable energy, educational, other
+
 
 ```python
-df.head(3)
+df.head(1)
 ```
 
 
@@ -124,100 +125,11 @@ df.head(3)
       <td>AZ</td>
       <td>27.65</td>
     </tr>
-    <tr>
-      <th>1</th>
-      <td>1314167</td>
-      <td>2500.0</td>
-      <td>2500.0</td>
-      <td>2500.0</td>
-      <td>60 months</td>
-      <td>15.27</td>
-      <td>59.83</td>
-      <td>C</td>
-      <td>C4</td>
-      <td>Ryder</td>
-      <td>&lt; 1 year</td>
-      <td>RENT</td>
-      <td>30000.0</td>
-      <td>Source Verified</td>
-      <td>Dec-2011</td>
-      <td>Charged Off</td>
-      <td>n</td>
-      <td>https://www.lendingclub.com/browse/loanDetail....</td>
-      <td>Borrower added on 12/22/11 &gt; I plan to use t...</td>
-      <td>car</td>
-      <td>bike</td>
-      <td>309xx</td>
-      <td>GA</td>
-      <td>1.00</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>1313524</td>
-      <td>2400.0</td>
-      <td>2400.0</td>
-      <td>2400.0</td>
-      <td>36 months</td>
-      <td>15.96</td>
-      <td>84.33</td>
-      <td>C</td>
-      <td>C5</td>
-      <td>NaN</td>
-      <td>10+ years</td>
-      <td>RENT</td>
-      <td>12252.0</td>
-      <td>Not Verified</td>
-      <td>Dec-2011</td>
-      <td>Fully Paid</td>
-      <td>n</td>
-      <td>https://www.lendingclub.com/browse/loanDetail....</td>
-      <td>NaN</td>
-      <td>small_business</td>
-      <td>real estate business</td>
-      <td>606xx</td>
-      <td>IL</td>
-      <td>8.72</td>
-    </tr>
   </tbody>
 </table>
 </div>
 
 
-
-
-```python
-df.term.unique()
-```
-
-
-
-
-    array([' 36 months', ' 60 months', '600 months'], dtype=object)
-
-
-
-
-```python
-df.pymnt_plan.unique()
-```
-
-
-
-
-    array(['n', 'y'], dtype=object)
-
-
-
-
-```python
-df['term2'] = [int(i.split()[0]) for i in df.term]
-df = (
-    df
-    .pipe(lambda x: x.assign(payment_plan = np.where(x.pymnt_plan=='n',1,0)))
-    .drop(['term', 'pymnt_plan'], axis=1)
-    .rename(columns={"term2": "term"})
-)
-```
 
 
 ```python
@@ -231,6 +143,7 @@ df.info()
     loan_amnt              887379 non-null float64
     funded_amnt            887379 non-null float64
     funded_amnt_inv        887379 non-null float64
+    term                   887379 non-null object
     int_rate               887379 non-null float64
     installment            887379 non-null float64
     grade                  887379 non-null object
@@ -242,6 +155,7 @@ df.info()
     verification_status    887379 non-null object
     issue_d                887379 non-null object
     loan_status            887379 non-null object
+    pymnt_plan             887379 non-null object
     url                    887379 non-null object
     desc                   126028 non-null object
     purpose                887379 non-null object
@@ -249,315 +163,24 @@ df.info()
     zip_code               887379 non-null object
     addr_state             887379 non-null object
     dti                    887379 non-null float64
-    term                   887379 non-null int64
-    payment_plan           887379 non-null int64
-    dtypes: float64(7), int64(3), object(14)
+    dtypes: float64(7), int64(1), object(16)
     memory usage: 169.3+ MB
 
 
 
 ```python
-df.loan_status.unique()
+# converting terms in int
+df['term2'] = [int(i.split()[0]) for i in df.term]
+
+# changing payment_plan to 1 (y) and 0 (n) and filling na with 999
+df = (
+    df
+    .pipe(lambda x: x.assign(payment_plan = np.where(x.pymnt_plan=='y',1,0)))
+    .drop(['term', 'pymnt_plan'], axis=1)
+    .rename(columns={"term2": "term"})
+    .fillna(999)
+)
 ```
-
-
-
-
-    array(['Fully Paid', 'Charged Off', 'Current', 'Default',
-           'Late (31-120 days)', 'In Grace Period', 'Late (16-30 days)',
-           'Does not meet the credit policy. Status:Fully Paid',
-           'Does not meet the credit policy. Status:Charged Off'], dtype=object)
-
-
-
-
-```python
-df.loan_status.value_counts()
-```
-
-
-
-
-    Current                                                597271
-    Fully Paid                                             206166
-    Charged Off                                             44912
-    Late (31-120 days)                                      11499
-    In Grace Period                                          6213
-    Late (16-30 days)                                        2337
-    Does not meet the credit policy. Status:Fully Paid       1976
-    Default                                                  1213
-    Does not meet the credit policy. Status:Charged Off       757
-    Name: loan_status, dtype: int64
-
-
-
-
-```python
-fully_paid = df.query("loan_status=='Fully Paid'")
-effy = df.query("loan_status =='Does not meet the credit policy. Status:Fully Paid'")
-```
-
-
-```python
-fully_paid.describe()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>member_id</th>
-      <th>loan_amnt</th>
-      <th>funded_amnt</th>
-      <th>funded_amnt_inv</th>
-      <th>int_rate</th>
-      <th>installment</th>
-      <th>annual_inc</th>
-      <th>dti</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>count</th>
-      <td>2.061660e+05</td>
-      <td>206166.000000</td>
-      <td>2.061660e+05</td>
-      <td>206166.000000</td>
-      <td>206166.000000</td>
-      <td>206166.000000</td>
-      <td>2.061660e+05</td>
-      <td>2.061660e+05</td>
-    </tr>
-    <tr>
-      <th>mean</th>
-      <td>1.386835e+07</td>
-      <td>14161.680879</td>
-      <td>1.480704e+04</td>
-      <td>13219.147069</td>
-      <td>13.331721</td>
-      <td>413.139794</td>
-      <td>7.696922e+04</td>
-      <td>-3.125179e+03</td>
-    </tr>
-    <tr>
-      <th>std</th>
-      <td>1.628014e+07</td>
-      <td>15452.568592</td>
-      <td>6.690401e+04</td>
-      <td>8053.417853</td>
-      <td>4.682235</td>
-      <td>244.179712</td>
-      <td>1.013761e+05</td>
-      <td>8.355176e+04</td>
-    </tr>
-    <tr>
-      <th>min</th>
-      <td>7.069900e+04</td>
-      <td>500.000000</td>
-      <td>-2.000000e+05</td>
-      <td>0.000000</td>
-      <td>1.000000</td>
-      <td>15.690000</td>
-      <td>-5.000000e+04</td>
-      <td>-2.500000e+06</td>
-    </tr>
-    <tr>
-      <th>25%</th>
-      <td>1.684134e+06</td>
-      <td>7200.000000</td>
-      <td>7.000000e+03</td>
-      <td>7000.000000</td>
-      <td>10.160000</td>
-      <td>234.377500</td>
-      <td>4.500000e+04</td>
-      <td>1.035000e+01</td>
-    </tr>
-    <tr>
-      <th>50%</th>
-      <td>7.449496e+06</td>
-      <td>12000.000000</td>
-      <td>1.200000e+04</td>
-      <td>11700.471902</td>
-      <td>13.110000</td>
-      <td>360.080000</td>
-      <td>6.400000e+04</td>
-      <td>1.571000e+01</td>
-    </tr>
-    <tr>
-      <th>75%</th>
-      <td>1.922561e+07</td>
-      <td>18000.000000</td>
-      <td>1.800000e+04</td>
-      <td>18000.000000</td>
-      <td>16.000000</td>
-      <td>540.545000</td>
-      <td>9.000000e+04</td>
-      <td>2.145000e+01</td>
-    </tr>
-    <tr>
-      <th>max</th>
-      <td>7.350742e+07</td>
-      <td>250000.000000</td>
-      <td>2.500000e+06</td>
-      <td>35000.000000</td>
-      <td>28.990000</td>
-      <td>1409.990000</td>
-      <td>7.141778e+06</td>
-      <td>5.714000e+01</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-```python
-effy.describe()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>member_id</th>
-      <th>loan_amnt</th>
-      <th>funded_amnt</th>
-      <th>funded_amnt_inv</th>
-      <th>int_rate</th>
-      <th>installment</th>
-      <th>annual_inc</th>
-      <th>dti</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>count</th>
-      <td>1976.000000</td>
-      <td>1976.000000</td>
-      <td>1.976000e+03</td>
-      <td>1976.000000</td>
-      <td>1976.000000</td>
-      <td>1976.000000</td>
-      <td>1.972000e+03</td>
-      <td>1.976000e+03</td>
-    </tr>
-    <tr>
-      <th>mean</th>
-      <td>467930.401316</td>
-      <td>9894.825405</td>
-      <td>1.106607e+04</td>
-      <td>6423.460524</td>
-      <td>13.422743</td>
-      <td>287.551225</td>
-      <td>7.433065e+04</td>
-      <td>-3.391823e+03</td>
-    </tr>
-    <tr>
-      <th>std</th>
-      <td>213173.949263</td>
-      <td>15614.561631</td>
-      <td>7.951404e+04</td>
-      <td>5944.471361</td>
-      <td>3.660910</td>
-      <td>204.293623</td>
-      <td>1.051943e+05</td>
-      <td>8.489865e+04</td>
-    </tr>
-    <tr>
-      <th>min</th>
-      <td>70473.000000</td>
-      <td>500.000000</td>
-      <td>-5.000000e+04</td>
-      <td>0.000000</td>
-      <td>1.000000</td>
-      <td>15.670000</td>
-      <td>-5.000000e+04</td>
-      <td>-2.500000e+06</td>
-    </tr>
-    <tr>
-      <th>25%</th>
-      <td>288368.750000</td>
-      <td>4075.000000</td>
-      <td>4.000000e+03</td>
-      <td>1975.000000</td>
-      <td>11.860000</td>
-      <td>135.990000</td>
-      <td>3.800000e+04</td>
-      <td>8.217500e+00</td>
-    </tr>
-    <tr>
-      <th>50%</th>
-      <td>459222.500000</td>
-      <td>7200.000000</td>
-      <td>7.000000e+03</td>
-      <td>4800.000000</td>
-      <td>13.850000</td>
-      <td>230.495000</td>
-      <td>5.700000e+04</td>
-      <td>1.445000e+01</td>
-    </tr>
-    <tr>
-      <th>75%</th>
-      <td>651029.250000</td>
-      <td>12000.000000</td>
-      <td>1.200000e+04</td>
-      <td>9403.167645</td>
-      <td>15.450000</td>
-      <td>390.722500</td>
-      <td>8.500000e+04</td>
-      <td>2.000000e+01</td>
-    </tr>
-    <tr>
-      <th>max</th>
-      <td>822719.000000</td>
-      <td>250000.000000</td>
-      <td>2.500000e+06</td>
-      <td>25000.000000</td>
-      <td>27.700000</td>
-      <td>940.140000</td>
-      <td>2.500000e+06</td>
-      <td>2.995000e+01</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
 
 
 ```python
@@ -593,85 +216,101 @@ df.describe()
       <th>installment</th>
       <th>annual_inc</th>
       <th>dti</th>
+      <th>term</th>
+      <th>payment_plan</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>count</th>
-      <td>8.807380e+05</td>
-      <td>880738.000000</td>
-      <td>8.807380e+05</td>
-      <td>880738.000000</td>
-      <td>880738.000000</td>
-      <td>880738.000000</td>
-      <td>8.807340e+05</td>
-      <td>8.807380e+05</td>
+      <td>8.873790e+05</td>
+      <td>887379.000000</td>
+      <td>8.873790e+05</td>
+      <td>887379.000000</td>
+      <td>887379.000000</td>
+      <td>887379.000000</td>
+      <td>8.873790e+05</td>
+      <td>8.873790e+05</td>
+      <td>887379.000000</td>
+      <td>887379.000000</td>
     </tr>
     <tr>
       <th>mean</th>
-      <td>3.499909e+07</td>
-      <td>15554.446527</td>
-      <td>1.614215e+04</td>
-      <td>14701.383153</td>
-      <td>13.243193</td>
-      <td>436.684319</td>
-      <td>7.759617e+04</td>
-      <td>-2.859317e+03</td>
+      <td>3.500182e+07</td>
+      <td>15177.429402</td>
+      <td>1.890163e+04</td>
+      <td>14702.464383</td>
+      <td>13.243805</td>
+      <td>436.717127</td>
+      <td>8.237772e+04</td>
+      <td>-8.562732e+03</td>
+      <td>45.641459</td>
+      <td>0.000011</td>
     </tr>
     <tr>
       <th>std</th>
-      <td>2.411448e+07</td>
-      <td>15515.969260</td>
-      <td>6.519445e+04</td>
-      <td>8440.832553</td>
-      <td>4.772118</td>
-      <td>244.152557</td>
-      <td>1.022653e+05</td>
-      <td>7.973133e+04</td>
+      <td>2.411335e+07</td>
+      <td>16084.862871</td>
+      <td>1.115294e+05</td>
+      <td>8442.106732</td>
+      <td>4.771725</td>
+      <td>244.186593</td>
+      <td>1.488760e+05</td>
+      <td>1.375036e+05</td>
+      <td>38.337477</td>
+      <td>0.003357</td>
     </tr>
     <tr>
       <th>min</th>
       <td>7.047300e+04</td>
-      <td>500.000000</td>
+      <td>-50000.000000</td>
       <td>-2.000000e+05</td>
       <td>0.000000</td>
       <td>1.000000</td>
       <td>15.670000</td>
       <td>-5.000000e+04</td>
       <td>-2.500000e+06</td>
+      <td>36.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>25%</th>
-      <td>1.086997e+07</td>
+      <td>1.087713e+07</td>
       <td>8000.000000</td>
       <td>8.000000e+03</td>
       <td>8000.000000</td>
       <td>9.990000</td>
-      <td>260.730000</td>
+      <td>260.705000</td>
       <td>4.500000e+04</td>
-      <td>1.184000e+01</td>
+      <td>1.169000e+01</td>
+      <td>36.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>50%</th>
-      <td>3.708669e+07</td>
+      <td>3.709528e+07</td>
       <td>13000.000000</td>
-      <td>1.300000e+04</td>
+      <td>1.290000e+04</td>
       <td>13000.000000</td>
       <td>12.990000</td>
       <td>382.550000</td>
-      <td>6.468000e+04</td>
-      <td>1.761000e+01</td>
+      <td>6.400000e+04</td>
+      <td>1.752000e+01</td>
+      <td>36.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>75%</th>
-      <td>5.847161e+07</td>
+      <td>5.847135e+07</td>
       <td>20000.000000</td>
       <td>2.000000e+04</td>
       <td>20000.000000</td>
       <td>16.290000</td>
-      <td>572.427500</td>
+      <td>572.600000</td>
       <td>9.000000e+04</td>
-      <td>2.392000e+01</td>
+      <td>2.386000e+01</td>
+      <td>60.000000</td>
+      <td>0.000000</td>
     </tr>
     <tr>
       <th>max</th>
@@ -683,6 +322,8 @@ df.describe()
       <td>1445.460000</td>
       <td>9.500000e+06</td>
       <td>9.999000e+03</td>
+      <td>600.000000</td>
+      <td>1.000000</td>
     </tr>
   </tbody>
 </table>
@@ -692,23 +333,227 @@ df.describe()
 
 
 ```python
-df = df.query("loan_amnt>=0 and loan_status!='Issued' ")
+# assumptions
+# funded_amnt, loan_amnt, annual_inc, dti cannot be less than 0. multiply them by -1
+df_edit = (
+    df
+    .pipe(lambda x: x.assign(funded_amnt_edit = np.where(x.funded_amnt<0, x.funded_amnt*-1, x.funded_amnt)))
+    .pipe(lambda x: x.assign(loan_amnt_edit = np.where(x.loan_amnt<0, x.loan_amnt*-1, x.loan_amnt)))
+    .pipe(lambda x: x.assign(annual_inc_edit = np.where(x.annual_inc<0, x.annual_inc*-1, x.annual_inc)))
+    .pipe(lambda x: x.assign(dti_edit = np.where(x.dti<0, x.dti*-1, x.dti)))
+    .drop(["funded_amnt", "loan_amnt", "annual_inc", "dti"], axis=1)
+    .rename(columns={"funded_amnt_edit": "funded_amnt", "loan_amnt_edit": "loan_amnt", "annual_inc_edit": "annual_inc", "dti_edit": "dti"})
+    [[
+        'member_id', 'loan_amnt', 'funded_amnt', 'funded_amnt_inv', 'int_rate', 
+        'installment', 'grade', 'sub_grade', 'emp_title', 'emp_length',
+        'home_ownership', 'annual_inc', 'verification_status', 'issue_d',
+        'loan_status', 'url', 'desc', 'purpose', 'title', 'zip_code',
+        'addr_state', 'dti', 'term', 'payment_plan']]
+)
 ```
 
 
 ```python
-_ = plt.figure(figsize=(20,6))
-_ = plt.subplot(121)
-_ = sns.distplot(df.loan_amnt)
-_ = plt.title('Frequency distribution')
+# assumptions 
+# funded_amnt or funded_amnt_inv cannot be more than loan_amnt
+# funded_amnt_inv cannot be more than funded_amnt
 
-_ = plt.subplot(122)
-_ = sns.boxplot(x='loan_amnt', data=df, orient='v')
-_ = plt.title('Boxplot')
+# checking out how many rows will be removed
+count = df_edit.query("funded_amnt_inv > loan_amnt or funded_amnt > loan_amnt or funded_amnt_inv > funded_amnt").shape[0]
+print("erroneous rows: " + str(count))
+
+print("number of rows in raw data: " + str(df_edit.shape[0]))
+```
+
+    erroneous rows: 4991
+    number of rows in raw data: 887379
+
+
+
+```python
+# since assumed erroneous rows is only approx ~0.5% of raw data, I will remove them
+df_edit = df_edit.query("funded_amnt_inv <= loan_amnt and funded_amnt <= loan_amnt and funded_amnt_inv <= funded_amnt")
 ```
 
 
-![png](funding-societies-assignment_files/funding-societies-assignment_16_0.png)
+```python
+df_edit.describe()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>member_id</th>
+      <th>loan_amnt</th>
+      <th>funded_amnt</th>
+      <th>funded_amnt_inv</th>
+      <th>int_rate</th>
+      <th>installment</th>
+      <th>annual_inc</th>
+      <th>dti</th>
+      <th>term</th>
+      <th>payment_plan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>8.823880e+05</td>
+      <td>882388.000000</td>
+      <td>882388.000000</td>
+      <td>882388.000000</td>
+      <td>882388.000000</td>
+      <td>882388.000000</td>
+      <td>8.823880e+05</td>
+      <td>8.823880e+05</td>
+      <td>882388.000000</td>
+      <td>882388.000000</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>3.499902e+07</td>
+      <td>15446.178014</td>
+      <td>14955.470666</td>
+      <td>14693.755111</td>
+      <td>13.242777</td>
+      <td>436.472471</td>
+      <td>7.898817e+04</td>
+      <td>4.299142e+03</td>
+      <td>45.643554</td>
+      <td>0.000011</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>2.411495e+07</td>
+      <td>14319.637392</td>
+      <td>9769.882116</td>
+      <td>8436.780490</td>
+      <td>4.771752</td>
+      <td>244.024472</td>
+      <td>1.150225e+05</td>
+      <td>9.723190e+04</td>
+      <td>38.372779</td>
+      <td>0.003366</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>7.047300e+04</td>
+      <td>500.000000</td>
+      <td>500.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>15.670000</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>36.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>1.086971e+07</td>
+      <td>8000.000000</td>
+      <td>8000.000000</td>
+      <td>8000.000000</td>
+      <td>9.990000</td>
+      <td>260.550000</td>
+      <td>4.500000e+04</td>
+      <td>1.195000e+01</td>
+      <td>36.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>3.708695e+07</td>
+      <td>13000.000000</td>
+      <td>13000.000000</td>
+      <td>13000.000000</td>
+      <td>12.990000</td>
+      <td>382.550000</td>
+      <td>6.450000e+04</td>
+      <td>1.772000e+01</td>
+      <td>36.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>5.847158e+07</td>
+      <td>20000.000000</td>
+      <td>20000.000000</td>
+      <td>20000.000000</td>
+      <td>16.290000</td>
+      <td>571.870000</td>
+      <td>9.000000e+04</td>
+      <td>2.407000e+01</td>
+      <td>60.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>7.354484e+07</td>
+      <td>250000.000000</td>
+      <td>200000.000000</td>
+      <td>35000.000000</td>
+      <td>28.990000</td>
+      <td>1445.460000</td>
+      <td>9.500000e+06</td>
+      <td>2.500000e+06</td>
+      <td>600.000000</td>
+      <td>1.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# seems there are some erroneous entry in dti
+# will use IQR to remove outliers
+upper_limit = np.percentile(df_edit.dti, 75) + (stats.iqr(df_edit.dti) * 1.5)
+lower_limit = np.percentile(df_edit.dti, 25) - (stats.iqr(df_edit.dti) * 1.5)
+
+df_edit2 = df_edit.query("dti >= {lower} and dti <= {upper}".format(lower=lower_limit, upper=upper_limit))
+```
+
+
+```python
+_ = plt.figure(figsize=(20,5))
+_ = plt.subplot(131)
+_ = sns.distplot(df_edit.loan_amnt)
+_ = plt.title('frequency distribution of loan amount')
+
+_ = plt.subplot(132)
+_ = sns.distplot(df_edit.funded_amnt)
+_ = plt.title('frequency distribution of funded amount')
+
+_ = plt.subplot(133)
+_ = sns.distplot(df_edit.funded_amnt_inv)
+_ = plt.title('frequency distribution of funded amount by investors')
+
+plt.subplots_adjust(top=0.92, bottom=0.08, left=0.10, right=0.95, hspace=0.25, wspace=0.35)
+```
+
+
+![png](funding-societies-assignment_files/funding-societies-assignment_14_0.png)
 
 
 
