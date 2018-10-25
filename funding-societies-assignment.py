@@ -50,20 +50,6 @@ df.info()
 
 
 
-# converting terms in int
-df['term2'] = [int(i.split()[0]) for i in df.term]
-
-# changing payment_plan to 1 (y) and 0 (n) and filling na with 999
-df = (
-    df
-    .pipe(lambda x: x.assign(payment_plan = np.where(x.pymnt_plan=='y',1,0)))
-    .drop(['term', 'pymnt_plan'], axis=1)
-    .rename(columns={"term2": "term"})
-    .fillna(999)
-)
-
-
-
 df.describe()
 
 
@@ -83,7 +69,7 @@ df_edit = (
         'installment', 'grade', 'sub_grade', 'emp_title', 'emp_length',
         'home_ownership', 'annual_inc', 'verification_status', 'issue_d',
         'loan_status', 'url', 'desc', 'purpose', 'title', 'zip_code',
-        'addr_state', 'dti', 'term', 'payment_plan']]
+        'addr_state', 'dti', 'term', 'pymnt_plan']]
 )
 
 
@@ -114,7 +100,57 @@ df_edit.describe()
 upper_limit = np.percentile(df_edit.dti, 75) + (stats.iqr(df_edit.dti) * 1.5)
 lower_limit = np.percentile(df_edit.dti, 25) - (stats.iqr(df_edit.dti) * 1.5)
 
-df_edit2 = df_edit.query("dti >= {lower} and dti <= {upper}".format(lower=lower_limit, upper=upper_limit))
+df_edit = df_edit.query("dti >= {lower} and dti <= {upper}".format(lower=lower_limit, upper=upper_limit))
+
+
+
+print("number of rows originally: " + str(df.shape[0]))
+print("number of rows left: " + str(df_edit.shape[0]))
+
+
+
+df_edit.loan_status.unique()
+
+
+
+df_edit.term.unique()
+
+
+
+# converting payment terms into integers
+df_edit['term2'] = [int(i.split()[0]) for i in df_edit.term]
+
+# changing payment_plan to 1 (y) and 0 (n) and filling na with 999
+# defining borrowers who are willing to make repayments are loans with status "Fully Paid" and "Current"
+# removing loan status "Issued" because it cannot be determine whether are they willing to pay
+# creating new feature funded_amnt_lc. assuming that lc top ups loans that there aren't enough investors
+df_edit = (
+    df_edit
+    .query("loan_status != 'Issued'")
+    .pipe(lambda x: x.assign(payment_plan = np.where(x.pymnt_plan=='y',1,0)))
+    .pipe(lambda x: x.assign(
+            loan_status_mod = np.where(x.loan_status == 'Fully Paid',1,
+                                       np.where(x.loan_status == 'Current',1,
+                                                np.where(x.loan_status == 'Does not meet the credit policy. Status:Fully Paid',1,0)))))
+    .pipe(lambda x: x.assign(funded_amnt_lc=x.funded_amnt-x.funded_amnt_inv))
+    .drop(['term', 'pymnt_plan'], axis=1)
+    .rename(columns={"term2": "term"})
+    .fillna(999)
+    [['member_id', 'loan_amnt', 'funded_amnt', 'funded_amnt_inv', 'funded_amnt_lc', 'int_rate',
+       'installment', 'grade', 'sub_grade', 'emp_title', 'emp_length',
+       'home_ownership', 'annual_inc', 'verification_status', 'issue_d',
+       'loan_status', 'loan_status_mod', 'url', 'desc', 'purpose', 'title', 'zip_code',
+       'addr_state', 'dti', 'term', 'payment_plan']]
+    )
+
+
+
+_ = plt.figure(figsize=(20,5))
+_ = plt.subplot(131)
+_ = sns.boxplot(x='loan_status_mod', y='loan_amnt', data=df_edit)
+
+_ = plt.subplot(132)
+_ = sns.barplot()
 
 
 

@@ -169,21 +169,6 @@ df.info()
 
 
 ```python
-# converting terms in int
-df['term2'] = [int(i.split()[0]) for i in df.term]
-
-# changing payment_plan to 1 (y) and 0 (n) and filling na with 999
-df = (
-    df
-    .pipe(lambda x: x.assign(payment_plan = np.where(x.pymnt_plan=='y',1,0)))
-    .drop(['term', 'pymnt_plan'], axis=1)
-    .rename(columns={"term2": "term"})
-    .fillna(999)
-)
-```
-
-
-```python
 df.describe()
 ```
 
@@ -216,8 +201,6 @@ df.describe()
       <th>installment</th>
       <th>annual_inc</th>
       <th>dti</th>
-      <th>term</th>
-      <th>payment_plan</th>
     </tr>
   </thead>
   <tbody>
@@ -229,10 +212,8 @@ df.describe()
       <td>887379.000000</td>
       <td>887379.000000</td>
       <td>887379.000000</td>
+      <td>8.873750e+05</td>
       <td>8.873790e+05</td>
-      <td>8.873790e+05</td>
-      <td>887379.000000</td>
-      <td>887379.000000</td>
     </tr>
     <tr>
       <th>mean</th>
@@ -242,10 +223,8 @@ df.describe()
       <td>14702.464383</td>
       <td>13.243805</td>
       <td>436.717127</td>
-      <td>8.237772e+04</td>
+      <td>8.237809e+04</td>
       <td>-8.562732e+03</td>
-      <td>45.641459</td>
-      <td>0.000011</td>
     </tr>
     <tr>
       <th>std</th>
@@ -255,10 +234,8 @@ df.describe()
       <td>8442.106732</td>
       <td>4.771725</td>
       <td>244.186593</td>
-      <td>1.488760e+05</td>
+      <td>1.488763e+05</td>
       <td>1.375036e+05</td>
-      <td>38.337477</td>
-      <td>0.003357</td>
     </tr>
     <tr>
       <th>min</th>
@@ -270,8 +247,6 @@ df.describe()
       <td>15.670000</td>
       <td>-5.000000e+04</td>
       <td>-2.500000e+06</td>
-      <td>36.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>25%</th>
@@ -283,8 +258,6 @@ df.describe()
       <td>260.705000</td>
       <td>4.500000e+04</td>
       <td>1.169000e+01</td>
-      <td>36.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>50%</th>
@@ -296,8 +269,6 @@ df.describe()
       <td>382.550000</td>
       <td>6.400000e+04</td>
       <td>1.752000e+01</td>
-      <td>36.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>75%</th>
@@ -309,8 +280,6 @@ df.describe()
       <td>572.600000</td>
       <td>9.000000e+04</td>
       <td>2.386000e+01</td>
-      <td>60.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>max</th>
@@ -322,8 +291,6 @@ df.describe()
       <td>1445.460000</td>
       <td>9.500000e+06</td>
       <td>9.999000e+03</td>
-      <td>600.000000</td>
-      <td>1.000000</td>
     </tr>
   </tbody>
 </table>
@@ -348,7 +315,7 @@ df_edit = (
         'installment', 'grade', 'sub_grade', 'emp_title', 'emp_length',
         'home_ownership', 'annual_inc', 'verification_status', 'issue_d',
         'loan_status', 'url', 'desc', 'purpose', 'title', 'zip_code',
-        'addr_state', 'dti', 'term', 'payment_plan']]
+        'addr_state', 'dti', 'term', 'pymnt_plan']]
 )
 ```
 
@@ -409,8 +376,6 @@ df_edit.describe()
       <th>installment</th>
       <th>annual_inc</th>
       <th>dti</th>
-      <th>term</th>
-      <th>payment_plan</th>
     </tr>
   </thead>
   <tbody>
@@ -422,10 +387,8 @@ df_edit.describe()
       <td>882388.000000</td>
       <td>882388.000000</td>
       <td>882388.000000</td>
+      <td>8.823840e+05</td>
       <td>8.823880e+05</td>
-      <td>8.823880e+05</td>
-      <td>882388.000000</td>
-      <td>882388.000000</td>
     </tr>
     <tr>
       <th>mean</th>
@@ -435,10 +398,8 @@ df_edit.describe()
       <td>14693.755111</td>
       <td>13.242777</td>
       <td>436.472471</td>
-      <td>7.898817e+04</td>
+      <td>7.898852e+04</td>
       <td>4.299142e+03</td>
-      <td>45.643554</td>
-      <td>0.000011</td>
     </tr>
     <tr>
       <th>std</th>
@@ -448,10 +409,8 @@ df_edit.describe()
       <td>8436.780490</td>
       <td>4.771752</td>
       <td>244.024472</td>
-      <td>1.150225e+05</td>
+      <td>1.150226e+05</td>
       <td>9.723190e+04</td>
-      <td>38.372779</td>
-      <td>0.003366</td>
     </tr>
     <tr>
       <th>min</th>
@@ -463,8 +422,6 @@ df_edit.describe()
       <td>15.670000</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
-      <td>36.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>25%</th>
@@ -476,8 +433,6 @@ df_edit.describe()
       <td>260.550000</td>
       <td>4.500000e+04</td>
       <td>1.195000e+01</td>
-      <td>36.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>50%</th>
@@ -489,8 +444,6 @@ df_edit.describe()
       <td>382.550000</td>
       <td>6.450000e+04</td>
       <td>1.772000e+01</td>
-      <td>36.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>75%</th>
@@ -502,8 +455,6 @@ df_edit.describe()
       <td>571.870000</td>
       <td>9.000000e+04</td>
       <td>2.407000e+01</td>
-      <td>60.000000</td>
-      <td>0.000000</td>
     </tr>
     <tr>
       <th>max</th>
@@ -515,8 +466,6 @@ df_edit.describe()
       <td>1445.460000</td>
       <td>9.500000e+06</td>
       <td>2.500000e+06</td>
-      <td>600.000000</td>
-      <td>1.000000</td>
     </tr>
   </tbody>
 </table>
@@ -531,8 +480,89 @@ df_edit.describe()
 upper_limit = np.percentile(df_edit.dti, 75) + (stats.iqr(df_edit.dti) * 1.5)
 lower_limit = np.percentile(df_edit.dti, 25) - (stats.iqr(df_edit.dti) * 1.5)
 
-df_edit2 = df_edit.query("dti >= {lower} and dti <= {upper}".format(lower=lower_limit, upper=upper_limit))
+df_edit = df_edit.query("dti >= {lower} and dti <= {upper}".format(lower=lower_limit, upper=upper_limit))
 ```
+
+
+```python
+print("number of rows originally: " + str(df.shape[0]))
+print("number of rows left: " + str(df_edit.shape[0]))
+```
+
+    number of rows originally: 887379
+    number of rows left: 877304
+
+
+
+```python
+df_edit.loan_status.unique()
+```
+
+
+
+
+    array(['Fully Paid', 'Charged Off', 'Current', 'Default',
+           'Late (31-120 days)', 'In Grace Period', 'Late (16-30 days)',
+           'Does not meet the credit policy. Status:Fully Paid',
+           'Does not meet the credit policy. Status:Charged Off', 'Issued'], dtype=object)
+
+
+
+
+```python
+df_edit.term.unique()
+```
+
+
+
+
+    array([' 36 months', ' 60 months', '600 months'], dtype=object)
+
+
+
+
+```python
+# converting payment terms into integers
+df_edit['term2'] = [int(i.split()[0]) for i in df_edit.term]
+
+# changing payment_plan to 1 (y) and 0 (n) and filling na with 999
+# defining borrowers who are willing to make repayments are loans with status "Fully Paid" and "Current"
+# removing loan status "Issued" because it cannot be determine whether are they willing to pay
+# creating new feature funded_amnt_lc. assuming that lc top ups loans that there aren't enough investors
+df_edit = (
+    df_edit
+    .query("loan_status != 'Issued'")
+    .pipe(lambda x: x.assign(payment_plan = np.where(x.pymnt_plan=='y',1,0)))
+    .pipe(lambda x: x.assign(
+            loan_status_mod = np.where(x.loan_status == 'Fully Paid',1,
+                                       np.where(x.loan_status == 'Current',1,
+                                                np.where(x.loan_status == 'Does not meet the credit policy. Status:Fully Paid',1,0)))))
+    .pipe(lambda x: x.assign(funded_amnt_lc=x.funded_amnt-x.funded_amnt_inv))
+    .drop(['term', 'pymnt_plan'], axis=1)
+    .rename(columns={"term2": "term"})
+    .fillna(999)
+    [['member_id', 'loan_amnt', 'funded_amnt', 'funded_amnt_inv', 'funded_amnt_lc', 'int_rate',
+       'installment', 'grade', 'sub_grade', 'emp_title', 'emp_length',
+       'home_ownership', 'annual_inc', 'verification_status', 'issue_d',
+       'loan_status', 'loan_status_mod', 'url', 'desc', 'purpose', 'title', 'zip_code',
+       'addr_state', 'dti', 'term', 'payment_plan']]
+    )
+```
+
+
+```python
+_ = plt.figure(figsize=(20,5))
+_ = plt.subplot(131)
+_ = sns.boxplot(x='loan_status_mod', y='loan_amnt', data=df_edit)
+
+_ = plt.subplot(132)
+_ = sns.barplot()
+
+```
+
+
+![png](funding-societies-assignment_files/funding-societies-assignment_17_0.png)
+
 
 
 ```python
@@ -553,7 +583,7 @@ plt.subplots_adjust(top=0.92, bottom=0.08, left=0.10, right=0.95, hspace=0.25, w
 ```
 
 
-![png](funding-societies-assignment_files/funding-societies-assignment_14_0.png)
+![png](funding-societies-assignment_files/funding-societies-assignment_18_0.png)
 
 
 
