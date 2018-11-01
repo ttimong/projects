@@ -15,8 +15,10 @@ from plotly import tools
 import plotly.plotly as py
 import plotly.figure_factory as ff
 import plotly.graph_objs as go
+# import plotly
+# plotly.offline.init_notebook_mode()
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
-offline.init_notebook_mode()
+init_notebook_mode()
 
 # modelling
 from sklearn.ensemble import RandomForestClassifier
