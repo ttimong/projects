@@ -7,6 +7,7 @@ import numpy as np
 import psycopg2
 import matplotlib.pyplot as plt
 import seaborn as sns
+import yaml
 
 pd.set_option("display.max_columns", 100)
 get_ipython().magic(u'matplotlib inline')
@@ -38,8 +39,16 @@ def pg_load_table(file_path, table_name, dbname, user):
 
 
 
-dbname = 'gofin'
-user = 'timong'
+with open("./postgres.yaml", "r") as stream:
+    try:
+        data_loaded = yaml.load(stream)
+    except yaml.YAMLERROR as exc:
+        print(exc)
+
+
+
+dbname = data_loaded['dbname']
+user = data_loaded['user']
 pg_load_table('./user_transactions.csv', 'transactions', dbname, user)
 pg_load_table('./user_label_branch_edit.csv', 'user_label_branch', dbname, user)
 # decided to load user_base_part1 only as user_base_part2 is just a duplicate of the first (ref to below cell)
@@ -176,6 +185,7 @@ group by 1, 2
 order by 2, 1
 """
 default_stats = pd.read_sql(query_default_stats, con = psycopg2.connect(database = dbname, user = user))
+# can use min, max, percentile_disc(0.25) and percentile_disc(0.75) functions as well
 
 
 
@@ -214,7 +224,7 @@ user_label_branch = (
 
 
 
-user_label_branch2.branch_code.describe()
+user_label_branch.branch_code.describe()
 
 
 
@@ -340,8 +350,4 @@ decile = pd.read_sql(query_decile, con = psycopg2.connect(database = dbname, use
 
 
 decile
-
-
-
-
 
